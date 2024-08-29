@@ -36,7 +36,7 @@ def main():
     parser = argparse.ArgumentParser(description="Utility tool for Conda Compute Cluster "
                                                  "Operations: 'run' or 'gpus'")
     
-    parser.add_argument('operation', choices=['run', 'gpus'], help='Operation to perform')
+    parser.add_argument('operation', choices=['run', 'gpus', 'file_cfg', 'file_utils'], help='Operation to perform')
 
     args = parser.parse_args(sys.argv[1:2])  
 
@@ -45,6 +45,10 @@ def main():
     elif args.operation == "gpus":
         from .select_gpus.main import main as select_gpus
         select_gpus(sys.argv[2:])
+    elif args.operation == "file_cfg":
+        print(os.path.abspath(os.path.join(get_parent_dirname(),'.ccc_config.sh')))
+    elif args.operation == "file_utils":
+        print(os.path.abspath(os.path.join(os.path.dirname(__file__), 'run_distributed','utils.sh')))
 
 if __name__ == '__main__':
     main()
