@@ -1,6 +1,8 @@
 ## CCC Tools
 
-Utility tools for Conda Compute Cluster
+Utility tools for Conda Compute Cluster with following operations
+ * distrbuted run of scripts on selected servers: `ccc run`
+ * list available gpus on cluster: `ccc gpus`
 
 # Installation
 
@@ -10,7 +12,7 @@ Install using pip:
 pip install git+https://github.com/vicoslab/ccc-tools
 ```
 
-# Distributed run
+# Distributed run `ccc run`
 Run your script distributed on servers:
 
 `SERVERS="SERVER_LIST" ccc run [your script] [args]` 
@@ -23,7 +25,7 @@ You can provide `.ccc_config.sh` to load your envirionment on each server (e.g.,
 
 CAUTION: This tool relies on automatic SSH connection! You need to properly setup ssh keys without passphrase for this to work.
 
-# Find available gpus
+# Find available gpus `ccc gpus`
 
 Find available gpus that you can use for distributed running
 
