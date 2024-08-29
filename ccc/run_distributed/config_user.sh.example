@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# You may setup user/project specific envirionment variables here
+
+# For example setup and load conda env
+# USE_CONDA_HOME=${USE_CONDA_HOME:-/home/USER/conda}
+# USE_CONDA_ENV=${USE_CONDA_ENV:-MyCondEnv}
+
+# . $USE_CONDA_HOME/etc/profile.d/conda.sh
+# conda activate $USE_CONDA_ENV
+
+# use $BASH_SOURCE to get paths relative to this file 
+# DO NOT USE $0 since this file is added with 'source' and 
