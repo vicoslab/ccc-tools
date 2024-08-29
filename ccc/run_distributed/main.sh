@@ -51,11 +51,10 @@ job_main() {
     ENVS="$ENVS WORLD_SIZE=$WORLD_SIZE"
     ENVS="$ENVS RANK_OFFSET=$RANK_OFFSET"
     
-    ENVS="$ENVS WORKDIR=$(pwd)"
-    ENVS="$ENVS USER_CONFIG_FILE=$USER_CONFIG_FILE"
     if [ -n "$USE_CONDA_ENV" ]; then
       ENVS="$ENVS USE_CONDA_ENV=$USE_CONDA_ENV"
     fi
+    ENVS="$ENVS WORKDIR=$(pwd)"
 
     export ENVS
     export SERVER_NAME
