@@ -101,7 +101,7 @@ Cluster information should be provided in JSON format as follows:
   "hosts": {
     "HOST_A": "https://host-a.patroller.cluster.com",
     "HOST_B": "https://host-b.patroller.cluster.com",
-    "HOST_C": "https://host-c.patroller.cluster.com",
+    "HOST_C": "https://host-c.patroller.cluster.com"
   },
   "host_priority": ["HOST_B", "HOST_A", "HOST_C"]
 }
