@@ -9,5 +9,5 @@
 # . $USE_CONDA_HOME/etc/profile.d/conda.sh
 # conda activate $USE_CONDA_ENV
 
-# use $BASH_SOURCE to get paths relative to this file 
-# DO NOT USE $0 since this file is added with 'source' and 
+# use $(dirname $BASH_SOURCE) to get paths relative to this file 
+# or $(dirname $0) for paths relative to original script that called 'ccc run'
