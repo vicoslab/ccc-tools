@@ -7,15 +7,14 @@ source $(ccc file_utils) # for wait_or_interrupt in utils.sh
 DO_TRAINING=True      # step 1: training
 DO_EVALUATION=True    # step 2: evaluate
 
-mapfile -t GPU_LIST < <(ccc gpus --on_cluster=$(dirname $0)/cluster_info.json --gpus=1 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
-GPU_COUNT=${#GPU_LIST[@]}
+# assuming 4 GPUs available on localhost
+GPUS_FILE=$(ccc gpus --on_cluster=$(dirname $0)/cluster_info.json --gpus=2 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
 
 ########################################
 # Training 
 ########################################
 
 if [[ "$DO_TRAINING" == True ]] ; then
-  s=0
 
   for db in "vicos_towel"; do
     export CCC_DATASET=$db
@@ -27,9 +26,7 @@ if [[ "$DO_TRAINING" == True ]] ; then
           elif [[ "$depth" == on ]] ; then
             export CCC_USE_DEPTH=True 
           fi
-          SERVERS=${GPU_LIST[$((s % GPU_COUNT))]} ccc run python dummy.py --config dummy=True backbone=$backbone epoch=$epoch &
-          s=$((s+1))
-          wait_or_interrupt $GPU_COUNT $s
+          ccc run $GPUS_FILE python dummy.py --config dummy=True backbone=$backbone epoch=$epoch &
         done
       done
     done
@@ -37,12 +34,12 @@ if [[ "$DO_TRAINING" == True ]] ; then
 fi
 wait_or_interrupt
 
+
 ########################################
 # Evaluating on test data
 ########################################
 
 if [[ "$DO_EVALUATION" == True ]] ; then
-  s=0
 
   for db in "vicos_towel"; do
     export CCC_DATASET=$db
@@ -56,9 +53,7 @@ if [[ "$DO_EVALUATION" == True ]] ; then
               export CCC_USE_DEPTH=True
             fi
             # run center model pre-trained on weakly-supervised
-            SERVERS=${GPU_LIST[$((s % GPU_COUNT))]} ccc run python dummy.py --config dummy=True backbone=$backbone epoch_train=$epoch_train epoch_eval=$epoch_eval &
-            s=$((s+1))
-            wait_or_interrupt $GPU_COUNT $s
+            ccc run $GPUS_FILE python dummy.py --config dummy=True backbone=$backbone epoch_train=$epoch_train epoch_eval=$epoch_eval &
           done
         done
       done
@@ -66,4 +61,6 @@ if [[ "$DO_EVALUATION" == True ]] ; then
   done
 fi
 
-wait
+wait_or_interrupt
+
+rm $GPUS_FILE

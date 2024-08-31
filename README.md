@@ -12,39 +12,51 @@ Install using pip:
 pip install git+https://github.com/vicoslab/ccc-tools
 ```
 
+# Usage
+
+Used for finding available gpus split into tasks and calling your script on individual servers with distributed pytorch convention (setting MASTER_PORT, MASTER_ADDR, WORLD_SIZE and RANK_OFFSET). Example usage:
+
+```bash
+# obtain list of available gpus split into 4 tasks/jobs (each with a single gpu)
+GPU_FILE=$(ccc gpus --on_cluster=cluster_info.json --gpus=1 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
+
+# submit multiple task
+ccc run $GPU_FILE python my_script.py --backbone=resnet50 &
+ccc run $GPU_FILE python my_script.py --backbone=resnet101 &
+ccc run $GPU_FILE python my_script.py --backbone=tu-convnext_base &
+ccc run $GPU_FILE python my_script.py --backbone=tu-convnext_large &
+ccc run $GPU_FILE python my_script.py --backbone=vit & # will wait until gpus become available since there are only 4 tasks available 
+
+# wait for completion of all
+wait
+
+```
+
+
 # Distributed run `ccc run`
 Run your script distributed on servers:
 
-`SERVERS="SERVER_LIST" ccc run [your script] [args]` 
+`ccc run GPU_FILE [your script] [args]` 
 
-e.g.: `SERVERS="localhost:0,1,2,4" ccc run python train.py --config epoch=10` 
+e.g.: `ccc run /tmp/ccc-gpus-dan28cua python train.py --config epoch=10` 
 
-This tool will ssh to individual servers and run `[your script] [args]` within the same workdir where ccc was called from (i.e., in folder where script calling ccc is located).
+This tool will select first avaibale set of servers (i.e. a task) from /tmp/ccc-gpus-dan28cua, ssh to individual servers and run `[your script] [args]` within the same workdir where ccc was called from (i.e., in folder where script calling ccc is located). Process blocks until your script is finished.
 
-You can provide `.ccc_config.sh` to load your envirionment on each server (e.g., loading conda env). Config file should be located within the same folder from where `ccc` tool is called. Note: config file will be created if does not exist yet.
+You can provide `.ccc_config.sh` to load your envirionment on each server (e.g., loading conda env). Config file should be located within the same folder from where `ccc` tool is called. Note: config file will be created if does not exist yet. 
+
+Any exported env variable with `CCC_` prefix will be passed to your script, but without the prefix.
 
 CAUTION: This tool relies on automatic SSH connection! You need to properly setup ssh keys without passphrase for this to work.
 
 # Find available gpus `ccc gpus`
 
-Find available gpus that you can use for distributed running
+Find available gpus that you can use for distributed running and save them to a file (e.g., /tmp/ccc-gpus-dan28cua). Filename is printed to stdout.
 
-`ccc gpus [ARGS]` 
+```ccc gpus [ARGS]```
 
-e.g.: `ccc gpus --on_cluster=cluster_info.json  --gpus=2 --tasks=4 --hosts="hostname1,hostname2(1+3),hostname3(1+2)" --ignore_hosts="hostname4"`
+e.g.: `ccc gpus --on_cluster=cluster_info.json  --gpus=2 --tasks=4 --hosts="hostname1,hostname2(1+3),hostname3(1+2)" --ignore_hosts="hostname4"` 
 
-This tool is used before running your script on servers with `ccc run`:
-
-```bash
-# obtain list of available gpus split into four tasks/jobs (each with a single gpu)
-mapfile -t GPU_LIST < <(ccc gpus --on_cluster=cluster_info.json --gpus=1 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
-
-SERVERS=${GPU_LIST[0]} ccc run python my_script.py --backbone=resnet50 &
-SERVERS=${GPU_LIST[1]} ccc run python my_script.py --backbone=resnet101 &
-SERVERS=${GPU_LIST[3]} ccc run python my_script.py --backbone=tu-convnext_base &
-SERVERS=${GPU_LIST[4]} ccc run python my_script.py --backbone=tu-convnext_large &
-
-```
+This tool is used to save a list of available GPUs before running your script on servers with `ccc run`. 
 
 Detailed description of `ccc gpus` command line:
 ```
@@ -74,6 +86,7 @@ options:
                         weather to group all gpus on the same host as one host (default: True)
   --wait_for_available WAIT_FOR_AVAILABLE
                         Time to wait for GPUs to become available, -1 == do not wait, 0 == wait indefinetly, >0 wait timeout (default: -1)
+  --stdout              output list of gpus to stdout instead of into file (default: False)
 
 Output format:
     # for cluster, one group of hosts per output line (num_gpus=6  min_gpus_per_host=2 max_gpus_per_output_group=6 )

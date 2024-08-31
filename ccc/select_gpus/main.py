@@ -1,6 +1,7 @@
 import os,sys
 import argparse
 import math
+import tempfile
 
 from collections import OrderedDict as OrderedDict
 
@@ -81,10 +82,13 @@ def parse_config(cmd):
     parser.add_argument("--min_allowed_gpus", type=int, default=-1,
                         help="min allow gpus to be selected than requested")
     parser.add_argument("--gpus_as_single_host", type=str, default="True",
-                        help="weather to group all gpus on the same host as one host (default: True)")
+                        help="whether to group all gpus on the same host as one host (default: True)")
     
     parser.add_argument("--wait_for_available", type=int, default=-1,
                         help="Time to wait for GPUs to become available, -1 == do not wait, 0 == wait indefinetly, >0 wait timeout (default: -1)")
+
+    parser.add_argument("--stdout", action='store_true',
+                        help="output list of gpus to stdout instead of into file (default: False)")
 
     return parser.parse_args(cmd)
 
@@ -123,11 +127,17 @@ def main(cmd):
             return [f'{host}:{g}' for g in gpus]
 
 
+    if args.stdout:
+        print_output = lambda s: print(s)
+    else:
+        temp_file = tempfile.NamedTemporaryFile(delete=False, prefix='ccc-gpus-')
+        print_output = lambda s: temp_file.write((s+"\n").encode())
+    
     for selected_devices in devices_for_tasks:
         # print result to stdout
         if not args.on_cluster:
             # print value for the only key in the dict
-            print(",".join(list(selected_devices.values())[0]))
+            print_output(",".join(list(selected_devices.values())[0]))
         else:
             single_task_display = []
             for host,gpus in selected_devices.items():
@@ -139,8 +149,12 @@ def main(cmd):
                 else:
                     # print all gpus for single host
                     single_task_display.extend(print_devices_per_host(host, gpus))
-            print(" ".join(single_task_display))
+            print_output(" ".join(single_task_display))
 
+
+    if not args.stdout:
+        print(temp_file.name)
+        temp_file.close()
 
 if __name__ == "__main__":
     main(sys.args[1:])
