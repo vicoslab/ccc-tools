@@ -5,6 +5,8 @@ Utility tools for [Conda Compute Cluster](https://github.com/vicoslab/ccc) enabl
  * distrbuted run of scripts on selected servers: `ccc run`
  * find available gpus on cluster: `ccc gpus`
 
+CAUTION: This tool relies on automatic SSH connection! You need to properly setup ssh keys without passphrase for distributed runs.
+
 # Installation
 
 Install using pip:
@@ -31,7 +33,7 @@ ccc run $GPU_FILE python my_script.py --backbone=vit & # will wait until gpus be
 # wait for completion of all
 wait
 
-# you need to manually delete GPU_FILE when finished
+# you need to manually cleanup GPU_FILE when finished
 rm $GPU_FILE
 ```
 
@@ -47,13 +49,13 @@ This tool will select first avaibale set of servers (i.e. a task) from /tmp/ccc-
 
 You can provide `.ccc_config.sh` to load your envirionment on each server (e.g., loading conda env). Config file should be located within the same folder from where `ccc` tool is called. Note: config file will be created if does not exist yet. 
 
-Any exported env variable with `CCC_` prefix will be passed to your script, but without the prefix.
+Any exported ENVIRIONMENT variable with `CCC_` prefix will be passed to your script, but without the prefix.
 
 CAUTION: This tool relies on automatic SSH connection! You need to properly setup ssh keys without passphrase for this to work.
 
 # Find available gpus with `ccc gpus`
 
-Find available gpus and save them to a tempfile, which you can pass to `ccc run` for distributed running. Filename is printed to stdout. NOTE: You need to manually delete file when not needed any more.
+Find available gpus and save them to a tempfile, which you can pass to `ccc run` for distributed running. Filename is printed to stdout. NOTE: You need to manually cleanup file when finished.
 
 ```ccc gpus [ARGS]```
 
