@@ -1,8 +1,9 @@
 ## CCC Tools
 
-Utility tools for Conda Compute Cluster with following operations
+Utility tools for [Conda Compute Cluster](https://github.com/vicoslab/ccc) enabling multi-node, multi-gpu distributed runs supporting distributed pytorch convention. The following operations are avilable:
+
  * distrbuted run of scripts on selected servers: `ccc run`
- * list available gpus on cluster: `ccc gpus`
+ * find available gpus on cluster: `ccc gpus`
 
 # Installation
 
@@ -50,7 +51,7 @@ CAUTION: This tool relies on automatic SSH connection! You need to properly setu
 
 # Find available gpus `ccc gpus`
 
-Find available gpus that you can use for distributed running and save them to a file (e.g., /tmp/ccc-gpus-dan28cua). Filename is printed to stdout.
+Find available gpus and save them to a tempfile, which you can pass to `ccc run` for distributed running. Filename is printed to stdout. NOTE: You need to manually delete file when not needed any more.
 
 ```ccc gpus [ARGS]```
 
@@ -73,13 +74,15 @@ options:
                         number of tasks, i.e. num_gpus are selected for each task (default: 1)
   --on_cluster ON_CLUSTER
                         when set to json file with cluster info then using all cluster hosts (default: None
+  --hosts HOSTS         comma separated list of hosts to select gpus from, in priority as listed; use only specific
+                        GPUs by adding "(ID1+ID2+ID3)" suffix to hostname, e.g. "HOST_A,HOST_B(1+2)" (default: all hosts)
+  --ignore_hosts IGNORE_HOSTS
+                        comma separated list of hosts to ignore; ignore only specific
+                        GPUs by adding "(ID1+ID2+ID3)" suffix to hostname, e.g. "HOST_A,HOST_B(1+2)" (default: None)
   --min_gpus_per_host MIN_GPUS_PER_HOST, --per_host MIN_GPUS_PER_HOST
                         minimum number of gpus to select per host (default: 1)
   --max_gpus_per_group MAX_GPUS_PER_GROUP, --out_group MAX_GPUS_PER_GROUP
                         output groups of gpus (e.g. 2 for 2 gpus per node) (default: 0)
-  --hosts HOSTS         comma separated list of hosts to select gpus from, in priority as listed (default: all hosts)
-  --ignore_hosts IGNORE_HOSTS
-                        comma separated list of hosts to ignore (default: None)
   --min_allowed_gpus MIN_ALLOWED_GPUS
                         min allow gpus to be selected than requested
   --gpus_as_single_host GPUS_AS_SINGLE_HOST

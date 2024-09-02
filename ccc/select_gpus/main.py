@@ -71,14 +71,14 @@ def parse_config(cmd):
                         help="number of tasks, i.e. num_gpus are selected for each task  (default: %(default)s)")
     parser.add_argument("--on_cluster", type=str, default="",
                         help="when set to json file with cluster info then using all cluster hosts (default: None")
+    parser.add_argument("--hosts", default="", type=str,
+                        help="comma separated list of hosts to select gpus from, in priority as listed; use only specific GPUs by adding '(ID1+ID2+ID3)' suffix to hostname, e.g. 'HOST_A,HOST_B(1+2)' (default: all hosts)")
+    parser.add_argument("--ignore_hosts", default="", type=str,
+                        help="comma separated list of hosts to ignore; ignore only specific GPUs by adding '(ID1+ID2+ID3)' suffix to hostname, e.g. 'HOST_A,HOST_B(1+2)' (default: None)")
     parser.add_argument("--min_gpus_per_host", "--per_host", default=1, type=int,
                         help="minimum number of gpus to select per host (default: %(default)s)")
     parser.add_argument("--max_gpus_per_group", "--out_group", default=0, type=int,
                         help="output groups of gpus (e.g. 2 for 2 gpus per node) (default: %(default)s)")
-    parser.add_argument("--hosts", default="", type=str,
-                        help="comma separated list of hosts to select gpus from, in priority as listed (default: all hosts)")
-    parser.add_argument("--ignore_hosts", default="", type=str,
-                        help="comma separated list of hosts to ignore (default: None)")
     parser.add_argument("--min_allowed_gpus", type=int, default=-1,
                         help="min allow gpus to be selected than requested")
     parser.add_argument("--gpus_as_single_host", type=str, default="True",
