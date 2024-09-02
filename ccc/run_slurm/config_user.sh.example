@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# You may setup user/project specific envirionment variables here and load SLURM modules
+
+
+# For example setup and load conda env
+
+# clear SLURM modules first
+# module purge
+
+# USE_CONDA_HOME=${USE_CONDA_HOME:-/home/USER/conda}
+# USE_CONDA_ENV=${USE_CONDA_ENV:-MyCondEnv}
+
+# . $USE_CONDA_HOME/etc/profile.d/conda.sh
+# conda activate $USE_CONDA_ENV
+
+# use $(dirname $BASH_SOURCE) to get paths relative to this file 
+# or $(dirname $0) for paths relative to original script that called 'ccc run'
