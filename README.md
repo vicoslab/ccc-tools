@@ -31,10 +31,12 @@ ccc run $GPU_FILE python my_script.py --backbone=vit & # will wait until gpus be
 # wait for completion of all
 wait
 
+# you need to manually delete GPU_FILE when finished
+rm $GPU_FILE
 ```
 
 
-# Distributed run `ccc run`
+# Distributed run with `ccc run`
 Run your script distributed on servers:
 
 `ccc run GPU_FILE [your script] [args]` 
@@ -49,7 +51,7 @@ Any exported env variable with `CCC_` prefix will be passed to your script, but 
 
 CAUTION: This tool relies on automatic SSH connection! You need to properly setup ssh keys without passphrase for this to work.
 
-# Find available gpus `ccc gpus`
+# Find available gpus with `ccc gpus`
 
 Find available gpus and save them to a tempfile, which you can pass to `ccc run` for distributed running. Filename is printed to stdout. NOTE: You need to manually delete file when not needed any more.
 
