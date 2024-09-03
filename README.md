@@ -20,16 +20,17 @@ pip install git+https://github.com/vicoslab/ccc-tools
 Used for finding available GPUs split into tasks and calling your script on individual servers with distributed PyTorch convention (setting MASTER_PORT, MASTER_ADDR, WORLD_SIZE, and RANK_OFFSET). Example usage:
 
 ```bash
-# load user/project configs and wait_or_interrupt function
+################################################################################
+# (optional) load user/project configs and wait_or_interrupt function
 source $(ccc file_cfg)   # for envs in user provided .ccc_config.sh or .slurm_config.sh
 source $(ccc file_utils) # for wait_or_interrupt defined in utils.sh
 
+# (optional) for SLURM environment, export SLURM_JOB_ARGS env var with non-GPU related requirements before calling ccc run
+export SLURM_JOB_ARGS="--output=logs/%j-node-%t.out --time=01:00:00 --mem-per-gpu=8G --partition=gpu --cpus-per-task=16 --exclude=wn202"
 
+################################################################################
 # obtain list of available GPUs split into 4 tasks/jobs (each with a single GPU)
 GPU_FILE=$(ccc gpus --on_cluster=cluster_info.json --gpus=1 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
-
-# for SLURM environment, export SLURM_JOB_ARGS env var with non-GPU related requirements before calling ccc run
-export SLURM_JOB_ARGS="--output=logs/%j-node-%t.out --time=01:00:00 --mem-per-gpu=8G --partition=gpu --cpus-per-task=16 --exclude=wn202"
 
 # submit multiple tasks
 ccc run $GPU_FILE python my_script.py --backbone=resnet50 &
@@ -45,13 +46,15 @@ wait_or_interrupt
 rm $GPU_FILE
 ```
 
+See a more detailed example [here](example/EXPERIMENTS_MAIN.sh).
+
 ### User/project config and utils scripts
 
 Provide an additional config to setup/load local environment (e.g., loading conda env or setting project env vars) on a running server host by creating `.ccc_config.sh` or `.slurm_config.sh`. Config file should be located within the same folder from where `ccc` tool is called. Note: config file will be created if it does not exist yet. 
 
 You can load this file in your main bash script using: `source $(ccc file_cfg)`. CAUTION: This will run the script both inside your main script as well as on the host server right before calling your program.
 
-Additionally, by adding `source $(ccc file_utils)` you can also use a bash function `wait_or_interrupt` that blocks until all background processes/jobs are finished and properly handles CTRL+C to stop and cleanup child processes under both CCC and SLURM.
+Additionally, by adding `source $(ccc file_utils)` you can also use a bash function `wait_or_interrupt` that blocks until all background processes/jobs are finished while properly handling CTRL+C to stop and cleanup child processes under both CCC and SLURM.
 
 ### Support for SLURM
 
@@ -62,18 +65,21 @@ You can use this tool in [CCC](https://github.com/vicoslab/ccc) or [SLURM](https
 
 NOTE: User/project config on SLURM will be loaded only from `.slurm_config.sh`. Calling `ccc file_cfg` and `ccc file_utils` transparently provides paths to the corresponding config/utils files based on whether this is run under CCC or SLURM.
 
-Example usage:
+Example usage on SLURM:
 ```bash
 ...
 
 # for SLURM environment, export SLURM_JOB_ARGS env var with non-GPU related requirements before calling ccc run
 export SLURM_JOB_ARGS="--output=logs/%j-node-%t.out --time=01:00:00 --mem-per-gpu=8G --partition=gpu --cpus-per-task=16 --exclude=wn202"
 
-# submit multiple tasks
+# then submit multiple tasks
 ccc run $GPU_FILE python my_script.py --backbone=resnet50 &
 ccc run $GPU_FILE python my_script.py --backbone=resnet101 &
 ...
 ```
+
+# Operations
+Detailed list of operations
 
 ## Distributed run with `ccc run`
 Run your script distributed on servers:
@@ -168,4 +174,20 @@ Cluster information should be provided in JSON format as follows:
   },
   "host_priority": ["HOST_B", "HOST_A", "HOST_C"]
 }
+```
+
+## List bash scripts for config/utils with `ccc file_*`
+
+To load config or utils functions in your main bash script you can get path to files using `ccc`:
+ * `ccc file_cfg`: path to your `.ccc_config.sh` or `.slurm_config.sh` configuration files
+ * `ccc file_utils`: path to utils with `wait_or_interrupt` function
+
+ Use with bash as:
+
+ ```bash
+ # for envs in user provided .ccc_config.sh or .slurm_config.sh
+source $(ccc file_cfg)   
+
+# for wait_or_interrupt defined in utils.sh
+source $(ccc file_utils) 
 ```
