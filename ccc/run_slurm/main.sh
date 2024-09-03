@@ -7,7 +7,7 @@ job_main() {
   ARGS="${SLURM_JOB_ARGS}"  
   ARGS="$ARGS -X" # disable status on SIGINT to force exit on CTR+C
 
-  if [ "${DISABLE_X11}" != "1" ]; then
+  if [ -n "$DISPLAY" ] && [ "${DISABLE_X11}" != "1" ]; then
     ARGS="--x11 $ARGS"
   fi
 
