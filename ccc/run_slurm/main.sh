@@ -5,35 +5,25 @@ CMD_ARGS=$@
 job_main() {
   # initial call to define the job and make a call to srun
   ARGS="${SLURM_JOB_ARGS}"  
+  ARGS="$ARGS -X" # disable status on SIGINT to force exit on CTR+C
 
   if [ "${DISABLE_X11}" != "1" ]; then
     ARGS="--x11 $ARGS"
   fi
 
   # pass all needed env vars (passthrough any CCC_ prefix variable, but without the prefix)
-  # Initialize an empty variable to hold the concatenated env vars
-  ENVS=""
-
-  # Loop through all environment variables that start with CCC_
   for var in $(printenv | grep '^CCC_'); do
-      # Remove the CCC_ prefix and append to ENVS
-      var_name=$(echo "$var" | sed 's/^CCC_//')
-      ENVS+="$var_name "
+      # Remove the CCC_ prefix and directly export
+      export $(printenv | grep '^CCC_' | sed 's/^CCC_//')
   done
-
-  # Trim the trailing space
-  ENVS=$(echo "$ENVS" | sed 's/[[:space:]]*$//')
-  ENVS="$ENVS WORKDIR=$(pwd)"
-
+  
   # call srun on this script but with 
-  RUN=task MASTER_PORT=$((RANDOM+24000)) $ENVS srun -u $ARGS $0 $CMD_ARGS
+  RUN=task MASTER_PORT=$((RANDOM+24000)) srun -u $ARGS $0 $CMD_ARGS
 }
 
 task_main() {
   # entry-point for each parallel task
   echo "Started tasks for job $SLURM_JOB_ID"
-
-  cd $WORKDIR
 
   # set up env vars
   source "$(dirname $BASH_SOURCE)/config.sh"

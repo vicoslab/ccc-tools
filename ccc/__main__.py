@@ -3,6 +3,8 @@ import argparse
 
 import os
 
+import subprocess
+
 from ccc.utils import get_parent_dirname
 
 def is_slurm_environment():
@@ -12,12 +14,9 @@ def is_slurm_environment():
     Returns:
         bool: True if in a SLURM environment, False otherwise.
     """
-    # Check for SLURM-related environment variables
-    slurm_submit_host = os.environ.get('SLURM_SUBMIT_HOST')
-    slurm_cluster_name = os.environ.get('SLURM_CLUSTER_NAME')
+    result = subprocess.run(['which', 'srun'], capture_output=True, text=True)
 
-    # Determine if we are in a SLURM environment
-    return slurm_submit_host or slurm_cluster_name
+    return result.returncode == 0
 
 def main():    
     # check if in SLURM envirionemnt

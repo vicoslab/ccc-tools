@@ -7,8 +7,9 @@ source $(ccc file_utils) # for wait_or_interrupt in utils.sh
 DO_TRAINING=True      # step 1: training
 DO_EVALUATION=True    # step 2: evaluate
 
+export DISABLE_X11=1
 # additional info for SLURM jobs
-export SLURM_JOB_ARGS=--output=logs/%j-node-%t.out --time=12:00:00 --mem-per-gpu=8G --partition=gpu --cpus-per-task=16 --exclude=gn01
+export SLURM_JOB_ARGS="--output=logs/%j-node-%t.out --time=01:00:00 --mem-per-gpu=8G --partition=gpu --cpus-per-task=16 --exclude=wn202"
 
 # assuming 4 GPUs available on localhost
 GPUS_FILE=$(ccc gpus --on_cluster=$(dirname $0)/cluster_info.json --gpus=2 --tasks=4 --hosts="HOST_A,HOST_B" --ignore_hosts="HOST_C")
