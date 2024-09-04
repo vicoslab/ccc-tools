@@ -15,6 +15,9 @@ if ! conda env list | grep -q "$USE_CONDA_ENV"; then
     pip install git+https://github.com/vicoslab/ccc-tools
 fi
 
+# manually call bashrc to setup conda init
+source ~/.bashrc
+
 conda activate $USE_CONDA_ENV
 echo "Using conda env '$USE_CONDA_ENV'"
 
