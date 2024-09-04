@@ -2,3 +2,7 @@ include ccc/run_distributed/main.sh
 include ccc/run_distributed/config.sh
 include ccc/run_distributed/utils.sh
 include ccc/run_distributed/config_user.sh.example
+include ccc/run_slurm/main.sh
+include ccc/run_slurm/config.sh
+include ccc/run_slurm/utils.sh
+include ccc/run_slurm/config_user.sh.example
