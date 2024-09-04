@@ -4,9 +4,24 @@ import os
 import fcntl
 import time
 
+import re
+
 from ccc.utils import get_parent_dirname
 
+def is_server_as_gpu_filename(file_path):
+    # if file exists then use it 
+    if os.path.exists(file_path):
+        return False
+    
+    # check if file contains valid server string
+    pattern = r'^\w+(:\d+(,\d+)*)?(\s+\w+(:\d+(,\d+)*)?)*$'
+    return re.match(pattern, file_path)
+
 def allocate_server(file_path):
+    # just pass value of file_path if this already contains valid server string
+    if is_server_as_gpu_filename(file_path):
+        return file_path
+    
     while True:
         with open(file_path, 'r+') as file:
             # Lock the file for reading and writing
@@ -39,6 +54,10 @@ def allocate_server(file_path):
 
 
 def release_server(file_path, server_name):
+    # skip if file_path already contains valid server string
+    if is_server_as_gpu_filename(file_path):
+        return 
+    
     with open(file_path, 'r+') as file:
         # Lock the file for reading and writing
         fcntl.flock(file, fcntl.LOCK_EX)
