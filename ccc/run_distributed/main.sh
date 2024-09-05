@@ -68,6 +68,8 @@ job_main() {
     RANK_OFFSET=$((RANK_OFFSET + num_gpus + 1))
   done
 
+  # do cleanup of child processes on CTRL+C
+  trap "kill 0" SIGINT  
   wait
 }
 
