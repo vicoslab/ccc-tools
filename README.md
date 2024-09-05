@@ -50,6 +50,7 @@ Alternatively you can explicilty define SERVER string instead of GPU_FILE:
 
 ```bash
 ccc run "localhost:0,1" python my_script.py --backbone=resnet50 &
+```
 
 See a more detailed example [here](example/EXPERIMENTS_MAIN.sh).
 
