@@ -2,11 +2,7 @@
 
 function cleanup() {
   echo "Terminated. Cleaning up .."
-  child_ids=$(pgrep -P $$ | xargs echo | tr " " ,)
-  # kill all child processes
-  pkill -P $child_ids
-  pkill $$
-  exit 0
+  kill 0
 }
 
 function wait_or_interrupt() {

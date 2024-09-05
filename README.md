@@ -46,6 +46,11 @@ wait_or_interrupt
 rm $GPU_FILE
 ```
 
+Alternatively you can explicilty define SERVER string instead of GPU_FILE:
+
+```bash
+ccc run "localhost:0,1" python my_script.py --backbone=resnet50 &
+
 See a more detailed example [here](example/EXPERIMENTS_MAIN.sh).
 
 ### User/project config and utils scripts
@@ -84,7 +89,7 @@ Detailed list of operations
 ## Distributed run with `ccc run`
 Run your script distributed on servers:
 
-`ccc run GPU_FILE [your script] [args]` 
+`ccc run [GPU_FILE or SERVER string] [your script] [args]` 
 
 e.g.: `ccc run /tmp/ccc-gpus-dan28cua python train.py --config epoch=10` 
 
