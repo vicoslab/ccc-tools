@@ -21,4 +21,4 @@ def get_parent_dirname():
         if cmdline and len(cmdline) > 1:
             return os.path.dirname(os.path.abspath(cmdline[1]))
 
-    return None
+    return os.path.abspath('.')
