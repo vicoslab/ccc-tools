@@ -24,15 +24,15 @@ def main():
     parser = argparse.ArgumentParser(description="Utility tool for Conda Compute Cluster "
                                                  "Operations: 'run' or 'gpus'")
     
-    parser.add_argument('operation', choices=['run', 'gpus', 'file_cfg', 'file_utils'], help='Operation to perform')
+    parser.add_argument('operation', choices=['run', 'dryrun', 'gpus', 'file_cfg', 'file_utils'], help='Operation to perform')
 
     args = parser.parse_args(sys.argv[1:2])  
     if is_slurm_environment(): 
         from ccc.run_slurm.main import run_slurm
         from ccc.gpus.main import main_slurm as define_gpus_slurm
 
-        if args.operation == "run":
-            run_slurm(sys.argv[2], sys.argv[3:])
+        if args.operation in ["run", "dryrun"]:
+            run_slurm(sys.argv[2], sys.argv[3:], args.operation == "dryrun")
         elif args.operation == "gpus":
             define_gpus_slurm(sys.argv[2:])
         elif args.operation == "file_cfg":
@@ -45,8 +45,8 @@ def main():
         from ccc.gpus.main import main as allocate_gpus_ccc
 
 
-        if args.operation == "run":
-            run_distributed(sys.argv[2], sys.argv[3:])
+        if args.operation in ["run", "dryrun"]:
+            run_distributed(sys.argv[2], sys.argv[3:], args.operation == "dryrun")
         elif args.operation == "gpus":
             allocate_gpus_ccc(sys.argv[2:])
         elif args.operation == "file_cfg":

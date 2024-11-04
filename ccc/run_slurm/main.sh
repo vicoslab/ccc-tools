@@ -25,9 +25,15 @@ job_main() {
   
   # call srun on this script if requested interactive/blocking or sbtach otherwise
   if [ "$USE_SRUN" == "1" ]; then
-    RUN=task MASTER_PORT=$((RANDOM+24000)) srun -u $JOB_ARGS $TASK_ARGS $0 $CMD_ARGS
+    cmd=srun -u $JOB_ARGS $TASK_ARGS $0 $CMD_ARGS
   else
-    RUN=task MASTER_PORT=$((RANDOM+24000)) sbatch $JOB_ARGS --wait --wrap "srun -u $TASK_ARGS $0 $CMD_ARGS"
+    cmd=sbatch $JOB_ARGS --wait --wrap "srun -u $TASK_ARGS $0 $CMD_ARGS"
+  fi
+
+  if "$DRYRUN" == "1" ]; then
+    echo RUN=task MASTER_PORT=$((RANDOM+24000)) $cmd
+  else
+    RUN=task MASTER_PORT=$((RANDOM+24000)) $cmd
   fi
 }
 

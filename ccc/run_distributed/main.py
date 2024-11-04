@@ -80,10 +80,13 @@ def release_server(file_path, server_name):
             # Unlock the file
             fcntl.flock(file, fcntl.LOCK_UN)
 
-def run_distributed(gpu_file, cmd):
+def run_distributed(gpu_file, cmd, is_dryrun=False):
     # allocate a server/gpus and set it to env var SERVERS
     os.environ['SERVERS'] = allocate_server(gpu_file)
     
+    if is_dryrun:
+        os.environ['DRYRUN'] = 1
+
     # call main script
     script_path = os.path.join(os.path.dirname(__file__), 'main.sh')
     subprocess.run(['bash', script_path] + cmd, cwd=get_parent_dirname())

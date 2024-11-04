@@ -3,7 +3,7 @@ import os
 
 from ccc.utils import get_parent_dirname
 
-def run_slurm(gpu_file, cmd):
+def run_slurm(gpu_file, cmd, is_dryrun=False):
     
     # read SLURM GPU allocation arguments from gpu_file
     with open(gpu_file, 'r') as file:
@@ -11,6 +11,9 @@ def run_slurm(gpu_file, cmd):
 
     # append GPU args to SLURM_JOB_ARGS for main.sh script
     os.environ['SLURM_JOB_ARGS'] = f"{os.environ['SLURM_JOB_ARGS']} {GPU_ARGS}" if 'SLURM_JOB_ARGS' in os.environ else GPU_ARGS
+
+    if is_dryrun:
+        os.environ['DRYRUN'] = 1
 
     # call main script
     script_path = os.path.join(os.path.dirname(__file__), 'main.sh')
