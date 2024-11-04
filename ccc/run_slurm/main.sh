@@ -4,11 +4,17 @@ CMD_ARGS=$@
 
 job_main() {
   # initial call to define the job and make a call to srun
-  ARGS="${SLURM_JOB_ARGS}"  
-  ARGS="$ARGS -X" # disable status on SIGINT to force exit on CTR+C
+  JOB_ARGS="${SLURM_JOB_ARGS}"  
+  
+  TASK_ARGS="${SLURM_TASK_ARGS}"
+  TASK_ARGS="$TASK_ARGS -X" # disable status on SIGINT to force exit on CTR+C
 
+  USE_SRUN=0
   if [ -n "$DISPLAY" ] && [ "${DISABLE_X11}" != "1" ]; then
-    ARGS="--x11 $ARGS"
+    TASK_ARGS="--x11 $TASK_ARGS"
+    
+    # use SRUN directly if requested --x11
+    USE_SRUN=1 
   fi
 
   # pass all needed env vars (passthrough any CCC_ prefix variable, but without the prefix)
@@ -17,8 +23,12 @@ job_main() {
       export $(printenv | grep '^CCC_' | sed 's/^CCC_//')
   done
   
-  # call srun on this script but with 
-  RUN=task MASTER_PORT=$((RANDOM+24000)) srun -u $ARGS $0 $CMD_ARGS
+  # call srun on this script if requested interactive/blocking or sbtach otherwise
+  if [ "$USE_SRUN" == "1" ]; then
+    RUN=task MASTER_PORT=$((RANDOM+24000)) srun -u $JOB_ARGS $TASK_ARGS $0 $CMD_ARGS
+  else
+    RUN=task MASTER_PORT=$((RANDOM+24000)) sbatch $JOB_ARGS --wait --wrap "srun -u $TASK_ARGS $0 $CMD_ARGS"
+  fi
 }
 
 task_main() {
