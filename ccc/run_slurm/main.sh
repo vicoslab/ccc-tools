@@ -47,7 +47,7 @@ task_main() {
   # set up env vars
   source "$(dirname $BASH_SOURCE)/config.sh"
 
-  master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+  master_addr=$(expand_nodelist | head -n 1)
   export MASTER_ADDR=$master_addr
 
   export WORLD_SIZE=$SLURM_NTASKS
@@ -72,6 +72,42 @@ task_main() {
   
   $CMD_ARGS
 
+}
+
+# Function to expand SLURM_JOB_NODELIST into individual hostnames the same as does scontrol show hostnames
+# however, scontrol is not available inside container so we need manual function
+expand_nodelist() {
+    # Function to expand a node range (e.g., node[01-03])
+    expand_node_range() {
+        local node_range=$1
+        if [[ $node_range =~ \[(.*)\] ]]; then
+            local prefix=${node_range%%\[*}
+            local range=${BASH_REMATCH[1]}
+            IFS='-' read -r start end <<< "$range"
+            for i in $(seq -f "%02g" "$start" "$end"); do
+                echo "${prefix}${i}"
+            done
+        else
+            echo "$node_range"  # If no range, just return the node
+        fi
+    }
+
+    # Get the SLURM_JOB_NODELIST
+    local NODELIST=$SLURM_JOB_NODELIST
+
+    # Prepare an empty array to hold expanded nodes
+    local expanded_nodes=()
+
+    # Split the node list by commas and expand each node
+    IFS=',' read -ra nodes <<< "$NODELIST"
+    for node in "${nodes[@]}"; do
+        expanded_nodes+=($(expand_node_range "$node"))
+    done
+
+    # Print the expanded list of hostnames
+    for hostname in "${expanded_nodes[@]}"; do
+        echo "$hostname"
+    done
 }
 
 if [ "${RUN}" = "task" ]; then
