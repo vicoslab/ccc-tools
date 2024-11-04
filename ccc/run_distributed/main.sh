@@ -82,7 +82,7 @@ ssh_main() {
   # call main task function on server (use -t -t to allow exiting remote process in interuption)  
   cmd=ssh $SSH_ARGS $SERVER_NAME RUN=task $ENVS $(realpath $0) $(printf "%q " "$CMD_ARGS")
   
-  if ["$DRYRUN" == "1" ]; then
+  if [ "$DRYRUN" == "1" ]; then
     echo $cmd
   else
     exec $cmd

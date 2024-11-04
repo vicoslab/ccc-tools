@@ -30,7 +30,7 @@ job_main() {
     cmd=sbatch $JOB_ARGS --wait --wrap "srun -u $TASK_ARGS $0 $CMD_ARGS"
   fi
 
-  if ["$DRYRUN" == "1" ]; then
+  if [ "$DRYRUN" == "1" ]; then
     echo RUN=task MASTER_PORT=$((RANDOM+24000)) $cmd
   else
     RUN=task MASTER_PORT=$((RANDOM+24000)) $cmd
