@@ -9,7 +9,7 @@ job_main() {
   TASK_ARGS="${SLURM_TASK_ARGS}"
   TASK_ARGS="$TASK_ARGS -X" # disable status on SIGINT to force exit on CTR+C
 
-  USE_SRUN=0
+  USE_SRUN="${USE_SRUN:-0}"
   if [ -n "$DISPLAY" ] && [ "${DISABLE_X11}" != "1" ]; then
     TASK_ARGS="--x11 $TASK_ARGS"
     
@@ -27,7 +27,10 @@ job_main() {
   if [ "$USE_SRUN" == "1" ]; then
     cmd="srun -u $JOB_ARGS $TASK_ARGS $0 $CMD_ARGS"
   else
-    cmd="sbatch $JOB_ARGS --wait --wrap \"srun -u $TASK_ARGS $0 $CMD_ARGS\""
+    # find how many tasks need to be started 
+    N=$(echo "$cmd" | grep -oP '(?<=--ntasks=)\d+')
+
+    cmd="sbatch $JOB_ARGS --wait --wrap \"for i in $(seq 1 $N); do srun -u $TASK_ARGS $0 $CMD_ARGS & done; wait\""
   fi
 
   if [ "$DRYRUN" == "1" ]; then
