@@ -13,7 +13,7 @@ def run_slurm(gpu_file, cmd, is_dryrun=False):
     os.environ['SLURM_JOB_ARGS'] = f"{os.environ['SLURM_JOB_ARGS']} {GPU_ARGS}" if 'SLURM_JOB_ARGS' in os.environ else GPU_ARGS
 
     if is_dryrun:
-        os.environ['DRYRUN'] = 1
+        os.environ['DRYRUN'] = '1'
 
     # call main script
     script_path = os.path.join(os.path.dirname(__file__), 'main.sh')

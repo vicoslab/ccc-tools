@@ -85,7 +85,7 @@ def run_distributed(gpu_file, cmd, is_dryrun=False):
     os.environ['SERVERS'] = allocate_server(gpu_file)
     
     if is_dryrun:
-        os.environ['DRYRUN'] = 1
+        os.environ['DRYRUN'] = '1'
 
     # call main script
     script_path = os.path.join(os.path.dirname(__file__), 'main.sh')
