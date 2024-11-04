@@ -77,37 +77,46 @@ task_main() {
 # Function to expand SLURM_JOB_NODELIST into individual hostnames the same as does scontrol show hostnames
 # however, scontrol is not available inside container so we need manual function
 expand_nodelist() {
-    # Function to expand a node range (e.g., node[01-03])
+    # Function to expand a node range (e.g., node[01-03], node[1-2], node[001-100])
     expand_node_range() {
-        local node_range=$1
-        if [[ $node_range =~ \[(.*)\] ]]; then
-            local prefix=${node_range%%\[*}
-            local range=${BASH_REMATCH[1]}
-            IFS='-' read -r start end <<< "$range"
-            for i in $(seq -f "%02g" "$start" "$end"); do
-                echo "${prefix}${i}"
-            done
-        else
-            echo "$node_range"  # If no range, just return the node
+      local node_range=$1
+      if [[ $node_range =~ \[(.*)\] ]]; then
+        local prefix=${node_range%%\[*}
+          local range=${BASH_REMATCH[1]}
+        IFS='-' read -r start end <<< "$range"
+
+        # Determine the width for zero padding
+        local width=${#start}
+        if [[ ${#end} -gt $width ]]; then
+            width=${#end}
         fi
-    }
 
-    # Get the SLURM_JOB_NODELIST
-    local NODELIST=$SLURM_JOB_NODELIST
+        # Expand the range with the appropriate zero padding
+        for i in $(seq -f "%0${width}g" "$start" "$end"); do
+            echo "${prefix}${i}"
+        done
+    else
+        echo "$node_range"  # If no range, just return the node
+    fi
+  }
 
-    # Prepare an empty array to hold expanded nodes
-    local expanded_nodes=()
 
-    # Split the node list by commas and expand each node
-    IFS=',' read -ra nodes <<< "$NODELIST"
-    for node in "${nodes[@]}"; do
-        expanded_nodes+=($(expand_node_range "$node"))
-    done
+  # Get the SLURM_JOB_NODELIST
+  local NODELIST=$SLURM_JOB_NODELIST
 
-    # Print the expanded list of hostnames
-    for hostname in "${expanded_nodes[@]}"; do
-        echo "$hostname"
-    done
+  # Prepare an empty array to hold expanded nodes
+  local expanded_nodes=()
+
+  # Split the node list by commas and expand each node
+  IFS=',' read -ra nodes <<< "$NODELIST"
+  for node in "${nodes[@]}"; do
+    expanded_nodes+=($(expand_node_range "$node"))
+  done
+
+  # Print the expanded list of hostnames
+  for hostname in "${expanded_nodes[@]}"; do
+    echo "$hostname"
+  done
 }
 
 if [ "${RUN}" = "task" ]; then
