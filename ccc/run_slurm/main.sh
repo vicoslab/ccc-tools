@@ -52,7 +52,6 @@ task_main() {
 
   export WORLD_SIZE=$SLURM_NTASKS
   export RANK_OFFSET=$SLURM_PROCID
-  echo "existing CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
   echo "SLURM_NTASKS=$SLURM_NTASKS"
   echo "SLURM_GPUS_PER_TASK=$SLURM_GPUS_PER_TASK"
 
@@ -64,6 +63,7 @@ task_main() {
   echo "NODELIST="${SLURM_NODELIST}
   echo "JOB_NODELIST="${SLURM_JOB_NODELIST}
 
+  echo "node=$SLURMD_NODENAME"
   echo "master=$MASTER_ADDR"
   ###################################################
 

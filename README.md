@@ -66,7 +66,8 @@ Additionally, by adding `source $(ccc file_utils)` you can also use a bash funct
 
 You can use this tool in [CCC](https://github.com/vicoslab/ccc) or [SLURM](https://slurm.schedmd.com/documentation.html) environment. When the `srun` command is detected, it will queue jobs to SLURM instead of manually running by SSH. Jobs will be run with `srun` in the background based on:
 
-* arguments from the exported `SLURM_JOB_ARGS` with general job requirements (name, time, cpus)
+* arguments from the exported `SLURM_JOB_ARGS` with general job requirements (e.g., name, time, cpus) passed to sbatch (if USE_SRUN=1 is set then this is passed to srun as well)
+* arguments from the exported `SLURM_TASK_ARGS` with task specific requirements (e.g., container) passed to srun
 * requested GPUs from the `ccc gpus` command, which is converted to SLURM GPU requirements and automatically passed along to `srun`
 
 NOTE: User/project config on SLURM will be loaded only from `.slurm_config.sh`. Calling `ccc file_cfg` and `ccc file_utils` transparently provides paths to the corresponding config/utils files based on whether this is run under CCC or SLURM.
@@ -123,11 +124,12 @@ options:
   -h, --help            show this help message and exit
   -N NUM_GPUS, --num_gpus NUM_GPUS, --gpus NUM_GPUS
             number of GPUs to select per one task (default: 1)
-  -T NUM_TASKS, --num_tasks NUM_TASKS, --tasks NUM_TASKS
-            number of tasks, i.e., num_gpus are selected for each task (default: 1)
+  -J NUM_JOBS, --num_jobs NUM_TASKS, --jobs NUM_JOBS
+            number of total jobs, i.e. --num_gpus are assigned to one job; for SLURM this is irrelevant as each ccc run call will allocated one SLURM job (default: 1)
   --on_cluster ON_CLUSTER
             when set to a JSON file with cluster info, it will use all cluster hosts (default: None
-  --hosts HOSTS         comma-separated list of hosts to select GPUs from, in priority as listed; use only specific
+  --hosts HOSTS         
+            comma-separated list of hosts to select GPUs from, in priority as listed; use only specific
             GPUs by adding "(ID1+ID2+ID3)" suffix to hostname, e.g., "HOST_A,HOST_B(1+2)" (default: all hosts)
   --ignore_hosts IGNORE_HOSTS
             comma-separated list of hosts to ignore; ignore only specific
@@ -148,8 +150,8 @@ options:
   
   --slurm_exclusive_node
             use --exclusive flag for allocating the whole node (default: False)
-  --slurm_gpus_per_node SLURM_GPUS_PER_NODE
-            number of GPUs per node available in the cluster, required only when using --slurm_exclusive_node (default: 1)
+  --slurm_gpus_per_task SLURM_GPUS_PER_TASK
+            number of gpus per a single slurm task (default: 1)
 Output format:
   # for cluster, one group of hosts per output line (num_gpus=6  min_gpus_per_host=2 max_gpus_per_output_group=6 )
   host1:0 host1:1 host1:2 host1:3 host2:0 host2:1        

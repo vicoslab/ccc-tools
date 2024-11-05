@@ -7,7 +7,7 @@ from collections import OrderedDict as OrderedDict
 
 from .cluter_info.patroller import PatrollerClusterInfo
 
-def select_gpus(num_gpus=1, num_tasks=1, min_allowed_gpus=0, on_cluster=None, min_gpus_per_host=1, localhost="claims",
+def select_gpus(num_gpus=1, num_jobs=1, min_allowed_gpus=0, on_cluster=None, min_gpus_per_host=1, localhost="claims",
                 only_hosts=None, ignore_hosts=(),):
 
     cluster = PatrollerClusterInfo(on_cluster)
@@ -33,7 +33,7 @@ def select_gpus(num_gpus=1, num_tasks=1, min_allowed_gpus=0, on_cluster=None, mi
 
     #  select gpus in a group of min_gpus_per_node; repeat this until all gpus are selected
     host_gpus_per_task = []
-    for _ in range(num_tasks):
+    for _ in range(num_jobs):
         selected_devices = []
         while len(selected_devices) < num_gpus and len(free_device_ids) > 0:
             # get the number of free gpus per host
@@ -66,9 +66,9 @@ def parse_config(cmd):
                                                  "Selected GPUs are returned as a list of gpu ids per host.")
 
     parser.add_argument("-N", "--num_gpus", "--gpus", type=int, default=1,
-                        help="number of gpus to select per one task (default: %(default)s)")
-    parser.add_argument("-T", "--num_tasks", "--tasks", type=int, default=1,
-                        help="number of tasks, i.e. num_gpus are selected for each task  (default: %(default)s)")
+                        help="number of gpus to select per one job (default: %(default)s)")
+    parser.add_argument("-J", "-T", "--num_jobs", "--num_tasks", "--jobs", "--tasks", type=int, default=1,
+                        help="number of total jobs, i.e. --num_gpus are assigned to one job; for SLURM this is irrelevant as each ccc run call will allocated one SLURM job (default: %(default)s)")
     parser.add_argument("--on_cluster", type=str, default="",
                         help="when set to json file with cluster info then using all cluster hosts (default: None")
     parser.add_argument("--hosts", default="", type=str,
@@ -92,8 +92,8 @@ def parse_config(cmd):
 
     parser.add_argument("--slurm_exclusive_node", action='store_true',
                         help="use --exclusive flag for allocating the whole node (default: False)")
-    parser.add_argument("--slurm_gpus_per_node", type=int, default=1,
-                        help="number of gpus per node available in cluster, required only when using --slurm_exclusive_node (default: 1)")
+    parser.add_argument("--slurm_gpus_per_task", type=int, default=1,
+                        help="number of gpus per a single slurm task (default: 1)")
 
 
 
@@ -120,7 +120,7 @@ def main(cmd):
     '''    
     args = parse_config(cmd)
 
-    devices_for_tasks = select_gpus(args.num_gpus, args.num_tasks,
+    devices_for_jobs = select_gpus(args.num_gpus, args.num_jobs,
                                    min_allowed_gpus=args.min_allowed_gpus,
                                    on_cluster=args.on_cluster,
                                    min_gpus_per_host=args.min_gpus_per_host,
@@ -140,7 +140,7 @@ def main(cmd):
         temp_file = tempfile.NamedTemporaryFile(delete=False, prefix='ccc-gpus-')
         print_output = lambda s: temp_file.write((s+"\n").encode())
     
-    for selected_devices in devices_for_tasks:
+    for selected_devices in devices_for_jobs:
         # print result to stdout
         if not args.on_cluster:
             # print value for the only key in the dict
@@ -163,30 +163,21 @@ def main(cmd):
         print(temp_file.name)
         temp_file.close()
 
-def define_gpus_args(num_gpus, gpus_per_node, exclusive_nodes=True):
+def define_gpus_args(num_gpus, gpus_per_task=1, exclusive_nodes=False):
     
-    # default cmd
-    slurm_gpus_args = ["--gpus-per-task=1",
-                       "--gpu-bind=single:1"]
-
-    if exclusive_nodes:
-        # use whole node exclusively
-        nodes = int(math.ceil(num_gpus/gpus_per_node))
-        slurm_gpus_args.append(f"--nodes={nodes}")
-        slurm_gpus_args.append(f"--ntasks-per-node={gpus_per_node}")     # number of tasks
-        slurm_gpus_args.append(f"--gres=gpu:{gpus_per_node}")	         # one GPU per task
-        slurm_gpus_args.append("--exclusive")
-    else:
-        # run wherever there is space (shared node if another GPU available on that node
-        slurm_gpus_args.append("--gres=gpu:1")	       # one GPU per task
-        slurm_gpus_args.append(f"--ntasks={num_gpus}")	# total GPUs in one run
+    # we use on job as a single srun/sbatch call and we set ntasks as the number of gpus (unless gpus_per_task>1 requested)
+    slurm_gpus_args = [f"--ntasks={num_gpus//gpus_per_task}", # total GPUs in one run
+                       f"--gpus-per-task={gpus_per_task}", # by default - one GPU per task
+                       f"--gpu-bind=single:{gpus_per_task}"]
+    if exclusive_nodes:        
+        slurm_gpus_args.append("--exclusive") # use whole node exclusively
     
     return " ".join(slurm_gpus_args)
 
 def main_slurm(cmd):
     args = parse_config(cmd)
 
-    slurm_gpus_alloc = define_gpus_args(num_gpus=args.num_gpus, gpus_per_node=args.slurm_gpus_per_node, 
+    slurm_gpus_alloc = define_gpus_args(num_gpus=args.num_gpus, gpus_per_task=args.slurm_gpus_per_task, 
                                         exclusive_nodes=args.slurm_exclusive_node)
 
     if args.stdout:
