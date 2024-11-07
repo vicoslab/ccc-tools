@@ -123,8 +123,6 @@ expand_nodelist() {
 
     NODELIST=$(echo "$NODELIST" | sed -E 's/\[([^\]]*)\]/\[\1\]/g; s/([^,]+),([^,]+)/\1;\2/g')
 
-
-    echo "nodelist is: $NODELIST"
     # Prepare an empty array to hold expanded nodes
     local expanded_nodes=()
 
