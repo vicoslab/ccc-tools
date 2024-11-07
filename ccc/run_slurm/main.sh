@@ -78,45 +78,66 @@ task_main() {
 # however, scontrol is not available inside container so we need manual function
 expand_nodelist() {
     # Function to expand a node range (e.g., node[01-03], node[1-2], node[001-100])
+
     expand_node_range() {
-      local node_range=$1
-      if [[ $node_range =~ \[(.*)\] ]]; then
-        local prefix=${node_range%%\[*}
-          local range=${BASH_REMATCH[1]}
-        IFS='-' read -r start end <<< "$range"
+        local node_range=$1
 
-        # Determine the width for zero padding
-        local width=${#start}
-        if [[ ${#end} -gt $width ]]; then
-            width=${#end}
+        # If the input matches the pattern node[...] with optional comma separation
+        if [[ $node_range =~ \[(.*)\] ]]; then
+            local prefix=${node_range%%\[*}  # Extract the prefix (e.g., "node")
+            local content=${BASH_REMATCH[1]}  # Extract the content inside the brackets
+
+            # Handle comma-separated list of nodes inside the brackets
+            if [[ $content =~ ";" ]]; then
+                # Split the content into individual node names and echo each
+                IFS=';' read -r -a nodes <<< "$content"
+                for node in "${nodes[@]}"; do
+                    echo "${prefix}${node}"
+                done
+            elif [[ $content =~ - ]]; then
+                # Handle node range (e.g., "01-03" or "1-5")
+                IFS='-' read -r start end <<< "$content"
+
+                # Determine the width for zero padding based on the larger of start or end
+                local width=${#start}
+                if [[ ${#end} -gt $width ]]; then
+                    width=${#end}
+                fi
+
+                # Expand the range with appropriate zero padding
+                for i in $(seq -f "%0${width}g" "$start" "$end"); do
+                    echo "${prefix}${i}"
+                done
+            else
+                # If no range or comma, just return the node as is
+                echo "${prefix}${content}"
+            fi
+        else
+            # If no brackets, just return the node as is
+            echo "$node_range"
         fi
+    }
 
-        # Expand the range with the appropriate zero padding
-        for i in $(seq -f "%0${width}g" "$start" "$end"); do
-            echo "${prefix}${i}"
-        done
-    else
-        echo "$node_range"  # If no range, just return the node
-    fi
-  }
+    # Get the SLURM_JOB_NODELIST
+    local NODELIST=$SLURM_JOB_NODELIST
+
+    NODELIST=$(echo "$NODELIST" | sed -E 's/\[([^\]]*)\]/\[\1\]/g; s/([^,]+),([^,]+)/\1;\2/g')
 
 
-  # Get the SLURM_JOB_NODELIST
-  local NODELIST=$SLURM_JOB_NODELIST
+    echo "nodelist is: $NODELIST"
+    # Prepare an empty array to hold expanded nodes
+    local expanded_nodes=()
 
-  # Prepare an empty array to hold expanded nodes
-  local expanded_nodes=()
+    # Split the node list by commas and expand each node
+    IFS=',' read -ra nodes <<< "$NODELIST"
+    for node in "${nodes[@]}"; do
+        expanded_nodes+=($(expand_node_range "$node"))
+    done
 
-  # Split the node list by commas and expand each node
-  IFS=',' read -ra nodes <<< "$NODELIST"
-  for node in "${nodes[@]}"; do
-    expanded_nodes+=($(expand_node_range "$node"))
-  done
-
-  # Print the expanded list of hostnames
-  for hostname in "${expanded_nodes[@]}"; do
-    echo "$hostname"
-  done
+    # Print the expanded list of hostnames
+    for hostname in "${expanded_nodes[@]}"; do
+        echo "$hostname"
+    done
 }
 
 if [ "${RUN}" = "task" ]; then
