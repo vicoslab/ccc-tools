@@ -82,36 +82,41 @@ expand_nodelist() {
     expand_node_range() {
         local node_range=$1
 
-        # If the input matches the pattern node[...] with optional comma separation
+        # If the input matches the pattern node[...] 
         if [[ $node_range =~ \[(.*)\] ]]; then
-            local prefix=${node_range%%\[*}  # Extract the prefix (e.g., "node")
+            local prefix=${node_range%%\[*}  # Extract the prefix (e.g., "node", "gn")
             local content=${BASH_REMATCH[1]}  # Extract the content inside the brackets
 
-            # Handle comma-separated list of nodes inside the brackets
-            if [[ $content =~ ";" ]]; then
-                # Split the content into individual node names and echo each
-                IFS=';' read -r -a nodes <<< "$content"
-                for node in "${nodes[@]}"; do
-                    echo "${prefix}${node}"
-                done
-            elif [[ $content =~ - ]]; then
-                # Handle node range (e.g., "01-03" or "1-5")
-                IFS='-' read -r start end <<< "$content"
+            # Split content by both commas and semicolons
+            local parts=()
+            IFS=',' read -ra comma_parts <<< "$content"
+            for part in "${comma_parts[@]}"; do
+                IFS=';' read -ra semicolon_parts <<< "$part"
+                parts+=("${semicolon_parts[@]}")
+            done
 
-                # Determine the width for zero padding based on the larger of start or end
-                local width=${#start}
-                if [[ ${#end} -gt $width ]]; then
-                    width=${#end}
+            # Process each part (could be a range like "02-03" or individual node like "06")
+            for part in "${parts[@]}"; do
+                if [[ $part =~ ^([0-9]+)-([0-9]+)$ ]]; then
+                    # Handle node range (e.g., "02-03" or "27-28")
+                    local start=${BASH_REMATCH[1]}
+                    local end=${BASH_REMATCH[2]}
+
+                    # Determine the width for zero padding based on the larger of start or end
+                    local width=${#start}
+                    if [[ ${#end} -gt $width ]]; then
+                        width=${#end}
+                    fi
+
+                    # Expand the range with appropriate zero padding
+                    for i in $(seq -f "%0${width}g" "$start" "$end"); do
+                        echo "${prefix}${i}"
+                    done
+                else
+                    # Individual node (e.g., "06", "24", "32", "37")
+                    echo "${prefix}${part}"
                 fi
-
-                # Expand the range with appropriate zero padding
-                for i in $(seq -f "%0${width}g" "$start" "$end"); do
-                    echo "${prefix}${i}"
-                done
-            else
-                # If no range or comma, just return the node as is
-                echo "${prefix}${content}"
-            fi
+            done
         else
             # If no brackets, just return the node as is
             echo "$node_range"
@@ -121,16 +126,41 @@ expand_nodelist() {
     # Get the SLURM_JOB_NODELIST
     local NODELIST=$SLURM_JOB_NODELIST
 
-    NODELIST=$(echo "$NODELIST" | sed -E 's/\[([^\]]*)\]/\[\1\]/g; s/([^,]+),([^,]+)/\1;\2/g')
-
     # Prepare an empty array to hold expanded nodes
     local expanded_nodes=()
 
-    # Split the node list by commas and expand each node
-    IFS=',' read -ra nodes <<< "$NODELIST"
-    for node in "${nodes[@]}"; do
-        expanded_nodes+=($(expand_node_range "$node"))
+    # Split the nodelist into individual node expressions
+    # We need to be careful about commas - they can be inside brackets or separators between node groups
+    local current_expr=""
+    local bracket_count=0
+    local i=0
+    
+    while [[ $i -lt ${#NODELIST} ]]; do
+        local char="${NODELIST:$i:1}"
+        
+        if [[ $char == "[" ]]; then
+            ((bracket_count++))
+            current_expr+="$char"
+        elif [[ $char == "]" ]]; then
+            ((bracket_count--))
+            current_expr+="$char"
+        elif [[ $char == "," && $bracket_count -eq 0 ]]; then
+            # This comma is a separator between node groups
+            if [[ -n $current_expr ]]; then
+                expanded_nodes+=($(expand_node_range "$current_expr"))
+                current_expr=""
+            fi
+        else
+            current_expr+="$char"
+        fi
+        
+        ((i++))
     done
+    
+    # Process the last expression
+    if [[ -n $current_expr ]]; then
+        expanded_nodes+=($(expand_node_range "$current_expr"))
+    fi
 
     # Print the expanded list of hostnames
     for hostname in "${expanded_nodes[@]}"; do
