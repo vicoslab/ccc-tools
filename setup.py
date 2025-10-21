@@ -6,7 +6,7 @@ def read(file_name):
 
 setup(
     name='ccc-tools',
-    version='0.4.0',
+    version='0.4.1',
     description='Utility tools for Conda Compute Cluster',
     long_description=read('README.md'),
     author='Domen Tabernik',
