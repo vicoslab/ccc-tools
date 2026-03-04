@@ -50,6 +50,9 @@ Alternatively you can explicilty define SERVER string instead of GPU_FILE:
 
 ```bash
 ccc run "localhost:0,1" python my_script.py --backbone=resnet50 &
+
+# or provide multiple resource files / sources (first available allocation is used)
+ccc run "/tmp/ccc-gpus-a.txt,/tmp/ccc-gpus-b.txt" python my_script.py --backbone=resnet50 &
 ```
 
 See a more detailed example [here](example/EXPERIMENTS_MAIN.sh).
@@ -92,6 +95,8 @@ Detailed list of operations
 Run your script distributed on servers:
 
 `ccc run [GPU_FILE or SERVER string] [your script] [args]` 
+
+`GPU_FILE` can also be a comma-separated list of files (or mixed file/server entries), e.g. `/tmp/gpus_a.txt,/tmp/gpus_b.txt`.
 
 e.g.: `ccc run /tmp/ccc-gpus-dan28cua python train.py --config epoch=10` 
 
