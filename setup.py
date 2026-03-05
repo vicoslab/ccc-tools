@@ -1,12 +1,21 @@
 from setuptools import setup, find_packages
 import os
+import re
 
 def read(file_name):
     return open(os.path.join(os.path.dirname(__file__), file_name)).read()
 
+def read_version():
+    init_path = os.path.join(os.path.dirname(__file__), 'ccc', '__init__.py')
+    content = open(init_path).read()
+    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+    if not match:
+        raise RuntimeError("Unable to find __version__ in ccc/__init__.py")
+    return match.group(1)
+
 setup(
     name='ccc-tools',
-    version='0.5.0',
+    version=read_version(),
     description='Utility tools for Conda Compute Cluster',
     long_description=read('README.md'),
     author='Domen Tabernik',

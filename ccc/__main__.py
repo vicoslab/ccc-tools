@@ -6,6 +6,7 @@ import os
 import subprocess
 
 from ccc.utils import get_parent_dirname
+from ccc import __version__
 
 def is_slurm_environment():
     """
@@ -23,6 +24,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Utility tool for Conda Compute Cluster "
                                                  "Operations: 'run' or 'gpus'")
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     
     parser.add_argument('operation', choices=['run', 'dryrun', 'gpus', 'file_cfg', 'file_utils'], help='Operation to perform')
 
